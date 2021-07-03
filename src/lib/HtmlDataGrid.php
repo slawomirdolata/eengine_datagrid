@@ -27,7 +27,21 @@ class HtmlDataGrid implements IHtmlDataGrid
         $output = '';
 
         foreach ($columns As $key => $column) {
-            $output .= '<th data-url="' . $this->state->createHrefWithParameterVariant(HttpState::ORDERBY_PARAMETER, $key) . '">' . $column->getLabel() . '</th>';
+            $sortIcon = '';
+            $sortIconName = '';
+
+            if ($key === $this->state->getOrderBy()) {
+                if ($this->state->isOrderAsc()) {
+                    $sortIconName = 'down';
+                } elseif ($this->state->isOrderDesc()) {
+                    $sortIconName = 'up';
+                }
+
+                $sortIcon = '<i class="bi bi-sort-' . $sortIconName . '" style="font-size: 1rem; color: cornflowerblue;"></i>';
+            }
+
+            $output .= '<th data-orderBy="' . $key . '">' . $column->getLabel() . $sortIcon . '</th>';
+
         }
 
         return $output;
@@ -73,9 +87,8 @@ class HtmlDataGrid implements IHtmlDataGrid
 
         for ($n = 0; $n < $numberOfPages; $n++) {
             $output .=
-                '<li class="page-item"><a class="page-link" href="'
-                . $this->state->createHrefWithParameterVariant(HttpState::PAGE_NUMBER_PARAMETER, $n)
-                . '">' . (string)($n + 1) . '</a></li>';
+                '<li class="page-item"><a class="page-link" href="#" data-page="'
+                . $n . '">' . (string)($n + 1) . '</a></li>';
         }
 
         return $output;
@@ -115,11 +128,12 @@ class HtmlDataGrid implements IHtmlDataGrid
         $this->sort();
 
         echo str_replace(
-            ['{{table_headers}}', '{{table_rows}}', '{{pagination}}'],
+            ['{{table_headers}}', '{{table_rows}}', '{{pagination}}', '{{control_form}}'],
             [
                 $this->generateHeaders(),
                 $this->convertRowsToHtmlTableRows(),
-                $this->generatePagination()
+                $this->generatePagination(),
+                $this->state->generateControlForm()
             ],
             $viewTempate
         );

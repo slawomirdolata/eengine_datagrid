@@ -69,7 +69,7 @@ class HttpState implements IState
      */
     public function isOrderDesc(): bool
     {
-        return $this->orderDir === 'desc';
+        return $this->orderDir === 'DESC';
     }
 
     /**
@@ -77,7 +77,7 @@ class HttpState implements IState
      */
     public function isOrderAsc(): bool
     {
-        return $this->orderDir === 'asc';
+        return $this->orderDir === 'ASC';
     }
 
     /**
@@ -107,5 +107,16 @@ class HttpState implements IState
         }
 
         return preg_replace('/([?&])' . $parameterName . '=[^&]*/', '$1' . $parameterName . '=' . $variant, $requestUri);
+    }
+
+    public function generateControlForm() : string
+    {
+        return '
+        <form action="' . $_SERVER['SCRIPT_NAME'] . '" method="get" id="controlForm">
+            <input type="hidden" name="' . self::PAGE_NUMBER_PARAMETER . '" id="h' . self::PAGE_NUMBER_PARAMETER . '" value="' . $this->currentPage . '" />
+            <input type="hidden" name="' . self::ORDERBY_PARAMETER . '" id="h' . self::ORDERBY_PARAMETER . '" value="' . $this->orderBy . '" />
+            <input type="hidden" name="' . self::ORDER_DIR_PARAMETER . '" id="h' . self::ORDER_DIR_PARAMETER . '" value="' . $this->orderDir . '" />
+            <input type="text" name="' . self::ROWS_NUMBER_PARAMETER . '" value="' . $this->rowsPerPage . '"/>
+        </form>';
     }
 }

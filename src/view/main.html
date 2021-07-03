@@ -11,36 +11,51 @@
 <script type="text/javascript">
   document.addEventListener('DOMContentLoaded', function() {
     let tab1 = document.getElementById('tab1');
+    let pagination = document.getElementsByClassName('pagination');
 
     if (tab1) {
       tab1.addEventListener('click', function(event) {
         if (event.target.tagName === 'TH') {
-          let newLocation = event.target.getAttribute('data-url').substring(1);
 
-        /*  if (newLocation === document.location.search) {
-            newLocation.replace('dir=asc', 'dir=desc');
+          let frm = document.getElementById('controlForm');
+          let hOrderBy = document.getElementById('horder');
+          let hDir = document.getElementById('hdir');
 
-            if (newLocation.indexOf('dir=asc') < 0) {
-              newLocation = newLocation + '&dir=desc';
+          if (hOrderBy.value === event.target.getAttribute('data-orderby')) {
+
+            if (hDir.value === 'ASC') {
+              hDir.value = 'DESC';
+            } else if (hDir.value === 'DESC') {
+              hOrderBy.value = '';
+              hDir.value = '';
             }
 
-            if (newLocation.indexOf('dir=desc') < 0) {
-              newLocation = newLocation + '&dir=desc';
-            }
+          } else {
+            hOrderBy.value = event.target.getAttribute('data-orderby');
+            hDir.value = 'ASC';
           }
-*/
-          
 
-          document.location.search = newLocation;
+          frm.submit();
         }
       });
+
+      if (pagination[0]) {
+        pagination[0].addEventListener('click', function(event) {
+          if (event.target.tagName === 'A') {
+            let frm = document.getElementById('controlForm');
+            let hPage = document.getElementById('hp');
+            hPage.value = event.target.getAttribute('data-page');
+            frm.submit();
+          }
+        });
+      }
     }
   });
 
  </script>
 
 </head>
-<body>  <div>A<span class="glyphicon glyphicon-triangle-bottom"></span>A<i class="bi bi-sort-up" style="font-size: 2rem; color: cornflowerblue;"></i><span class="glyphicon glyphicon-triangle-top"></span>A</div>
+<body>
  <table id="tab1" class="table">
   <thead class="thead-dark"><tr>{{table_headers}}</tr></thead>
   <tbody>
@@ -54,6 +69,6 @@
   </ul>
 </nav>
 
-<form method="get"><input type="hidden" id="hSort" name="order" /></form>
+{{control_form}}
 </body>
 </html>
