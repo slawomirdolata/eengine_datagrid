@@ -9,6 +9,7 @@ namespace Eengine\Test\lib;
 class HtmlDataGrid implements IHtmlDataGrid
 {
     const TEMPLATES_DIRECTORY = 'src/view/';
+    const SORT_ICON_PREFIX = 'bi bi-sort-';
 
     private $templateFile = 'main.html';
     private $config;
@@ -37,7 +38,7 @@ class HtmlDataGrid implements IHtmlDataGrid
                     $sortIconName = 'up';
                 }
 
-                $sortIcon = '<i class="bi bi-sort-' . $sortIconName . '" style="font-size: 1rem; color: cornflowerblue;"></i>';
+                $sortIcon = '<i class="' . self::SORT_ICON_PREFIX . $sortIconName . '" style="font-size: 1rem; color: cornflowerblue;"></i>';
             }
 
             $output .= '<th data-orderBy="' . $key . '">' . $column->getLabel() . $sortIcon . '</th>';

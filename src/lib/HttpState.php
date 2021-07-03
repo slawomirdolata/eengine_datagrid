@@ -1,15 +1,19 @@
 <?php
 
+use Eengine\Test\lib\HttpGetParameter;
+
 namespace Eengine\Test\lib;
 
 class HttpState implements IState
 {
+    const DEFAULT_ROWS_MENGE = 9;
+
     private static $instance = null;
-    private $requestUri = '';
-    private $currentPage = 0;
+    //private $requestUri = '';
+    private $currentPage;
     private $orderBy = '';
-    private $orderDir = 'ASC';
-    private $rowsPerPage = 5;
+    private $orderDir = self::SORTING_UP_KEYWORD;
+    private $rowsPerPage = 0;
 
     public static function create() : HttpState
     {
@@ -23,29 +27,11 @@ class HttpState implements IState
 
     private function setParameters() : void
     {
-        if (isset($_GET[self::PAGE_NUMBER_PARAMETER]) && is_numeric($_GET[self::PAGE_NUMBER_PARAMETER])) {
-            $this->currentPage = (int)$_GET[self::PAGE_NUMBER_PARAMETER];
-        }
-
-        if (isset($_GET[self::ROWS_NUMBER_PARAMETER]) && is_numeric($_GET[self::ROWS_NUMBER_PARAMETER])) {
-            $rowsPerPage = (int)$_GET[self::ROWS_NUMBER_PARAMETER];
-
-            if ($rowsPerPage > 100) {
-                throw new \Exception('Podano zbyt dużą liczbę wierszy');
-            }
-
-            $this->rowsPerPage = $rowsPerPage;
-        }
-
-        if (isset($_GET[self::ORDERBY_PARAMETER])) {
-            $this->orderBy = $_GET[self::ORDERBY_PARAMETER];
-        }
-
-        if (isset($_GET[self::ORDER_DIR_PARAMETER])) {
-            $this->orderDir = $_GET[self::ORDER_DIR_PARAMETER];
-        }
-
-        $this->requestUri = $_SERVER['REQUEST_URI'];
+        $this->currentPage = new HttpGetParameter(self::PAGE_NUMBER_PARAMETER, self::INTEGER_TYPE, 1000, 0);
+        $this->rowsPerPage = new HttpGetParameter(self::ROWS_NUMBER_PARAMETER, self::INTEGER_TYPE, 200, self::DEFAULT_ROWS_MENGE);
+        $this->orderBy = new HttpGetParameter(self::ORDERBY_PARAMETER, self::STRING_TYPE, 20);
+        $this->orderDir = new HttpGetParameter(self::ORDER_DIR_PARAMETER, self::STRING_TYPE, 4);
+        $this->orderDir->setAcceptedValues([self::SORTING_UP_KEYWORD, self::SORTING_DOWN_KEYWORD]);
     }
 
     /**
@@ -53,7 +39,7 @@ class HttpState implements IState
      */
     public function getCurrentPage() : int
     {
-        return $this->currentPage;
+        return $this->currentPage->getValue();
     }
 
     /**
@@ -61,7 +47,7 @@ class HttpState implements IState
      */
     public function getOrderBy(): string
     {
-        return $this->orderBy;
+        return $this->orderBy->getValue();
     }
 
     /**
@@ -69,7 +55,7 @@ class HttpState implements IState
      */
     public function isOrderDesc(): bool
     {
-        return $this->orderDir === 'DESC';
+        return $this->orderDir->getValue() === self::SORTING_DOWN_KEYWORD;
     }
 
     /**
@@ -77,7 +63,7 @@ class HttpState implements IState
      */
     public function isOrderAsc(): bool
     {
-        return $this->orderDir === 'ASC';
+        return $this->orderDir->getValue() === self::SORTING_UP_KEYWORD;
     }
 
     /**
@@ -85,38 +71,17 @@ class HttpState implements IState
      */
     public function getRowsPerPage() : int
     {
-        return $this->rowsPerPage;
-    }
-
-    /**
-     * Generuje href dla znacznika (np. <a>), z odpowiednim wariantem parametru w GET. Jeśli tego parametru nie ma, to zostanie dodany
-     * @param $parameterName string nazwa parametru w GET
-     * @param $variant liczbowy lub tekstowy wariant
-     * @return string
-     */
-    public function createHrefWithParameterVariant(string $parameterName, string $variant) : string
-    {
-        $requestUri = $this->requestUri;
-
-        if (preg_match('/\/.*$/', $requestUri)) {
-            $requestUri .= '?' . $parameterName . '=0';
-        }
-
-        if (strpos($requestUri, $parameterName . '=') === false) {
-            $requestUri .= '&' . $parameterName . '=0';
-        }
-
-        return preg_replace('/([?&])' . $parameterName . '=[^&]*/', '$1' . $parameterName . '=' . $variant, $requestUri);
+        return $this->rowsPerPage->getValue();
     }
 
     public function generateControlForm() : string
     {
         return '
         <form action="' . $_SERVER['SCRIPT_NAME'] . '" method="get" id="controlForm">
-            <input type="hidden" name="' . self::PAGE_NUMBER_PARAMETER . '" id="h' . self::PAGE_NUMBER_PARAMETER . '" value="' . $this->currentPage . '" />
-            <input type="hidden" name="' . self::ORDERBY_PARAMETER . '" id="h' . self::ORDERBY_PARAMETER . '" value="' . $this->orderBy . '" />
-            <input type="hidden" name="' . self::ORDER_DIR_PARAMETER . '" id="h' . self::ORDER_DIR_PARAMETER . '" value="' . $this->orderDir . '" />
-            <input type="text" name="' . self::ROWS_NUMBER_PARAMETER . '" value="' . $this->rowsPerPage . '"/>
+            <input type="hidden" name="' . self::PAGE_NUMBER_PARAMETER . '" id="h' . self::PAGE_NUMBER_PARAMETER . '" value="' . $this->getCurrentPage() . '" />
+            <input type="hidden" name="' . self::ORDERBY_PARAMETER . '" id="h' . self::ORDERBY_PARAMETER . '" value="' . $this->getOrderBy() . '" />
+            <input type="hidden" name="' . self::ORDER_DIR_PARAMETER . '" id="h' . self::ORDER_DIR_PARAMETER . '" value="' . $this->orderDir->getValue() . '" />
+            <input type="text" name="' . self::ROWS_NUMBER_PARAMETER . '" value="' . $this->rowsPerPage->getValue() . '"/>
         </form>';
     }
 }

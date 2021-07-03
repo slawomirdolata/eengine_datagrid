@@ -9,6 +9,6 @@ class TextType implements IDataType {
     */
     public function format(?string $value): string
     {
-        return strip_tags($value);
+        return strip_tags(str_replace (' ', '&nbsp;', $value));
     }
 }

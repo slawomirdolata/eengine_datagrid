@@ -9,6 +9,12 @@ interface IState {
     const ORDERBY_PARAMETER = 'order';
     const ORDER_DIR_PARAMETER = 'dir';
 
+    const INTEGER_TYPE = true;
+    const STRING_TYPE = false;
+
+    const SORTING_UP_KEYWORD = 'ASC';
+    const SORTING_DOWN_KEYWORD = 'DESC';
+
     /**
      * Zwraca aktualna strone DataGrid do wyświetlenia
      */
