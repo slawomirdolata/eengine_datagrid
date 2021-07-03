@@ -5,6 +5,7 @@ namespace Eengine\Test\lib;
 class HttpState implements IState
 {
     private static $instance = null;
+    private $requestUri = '';
     private $currentPage = 0;
     private $orderBy = '';
     private $orderDir = 'ASC';
@@ -43,6 +44,8 @@ class HttpState implements IState
         if (isset($_GET[self::ORDER_DIR_PARAMETER])) {
             $this->orderDir = $_GET[self::ORDER_DIR_PARAMETER];
         }
+
+        $this->requestUri = $_SERVER['REQUEST_URI'];
     }
 
     /**
@@ -66,7 +69,7 @@ class HttpState implements IState
      */
     public function isOrderDesc(): bool
     {
-        return $this->orderDir === 'DESC';
+        return $this->orderDir === 'desc';
     }
 
     /**
@@ -74,7 +77,7 @@ class HttpState implements IState
      */
     public function isOrderAsc(): bool
     {
-        return $this->orderDir === 'ASC';
+        return $this->orderDir === 'asc';
     }
 
     /**
@@ -83,5 +86,26 @@ class HttpState implements IState
     public function getRowsPerPage() : int
     {
         return $this->rowsPerPage;
+    }
+
+    /**
+     * Generuje href dla znacznika (np. <a>), z odpowiednim wariantem parametru w GET. Jeśli tego parametru nie ma, to zostanie dodany
+     * @param $parameterName string nazwa parametru w GET
+     * @param $variant liczbowy lub tekstowy wariant
+     * @return string
+     */
+    public function createHrefWithParameterVariant(string $parameterName, string $variant) : string
+    {
+        $requestUri = $this->requestUri;
+
+        if (preg_match('/\/.*$/', $requestUri)) {
+            $requestUri .= '?' . $parameterName . '=0';
+        }
+
+        if (strpos($requestUri, $parameterName . '=') === false) {
+            $requestUri .= '&' . $parameterName . '=0';
+        }
+
+        return preg_replace('/([?&])' . $parameterName . '=[^&]*/', '$1' . $parameterName . '=' . $variant, $requestUri);
     }
 }

@@ -18,5 +18,5 @@ $config = (new DefaultConfig)
     ->addTextColumn('phone')
     ->addTextColumn('email');
 
-$datagrid = new HtmlDataGrid();
-$datagrid->withConfig($config)->render($rows, $state);
+$datagrid = new HtmlDataGrid($rows, $state);
+$datagrid->withConfig($config)->render();

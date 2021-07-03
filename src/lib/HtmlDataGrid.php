@@ -12,6 +12,14 @@ class HtmlDataGrid implements IHtmlDataGrid
 
     private $templateFile = 'main.html';
     private $config;
+    private $rows = [];
+    private $state;
+
+    public function __construct(array $rows, HttpState $state)
+    {
+        $this->rows = $rows;
+        $this->state = $state;
+    }
 
     private function generateHeaders() : string
     {
@@ -19,20 +27,20 @@ class HtmlDataGrid implements IHtmlDataGrid
         $output = '';
 
         foreach ($columns As $key => $column) {
-            $output .= '<th data-sort="' . $key . '">' . $column->getLabel() . '</th>';
+            $output .= '<th data-url="' . $this->state->createHrefWithParameterVariant(HttpState::ORDERBY_PARAMETER, $key) . '">' . $column->getLabel() . '</th>';
         }
 
         return $output;
     }
 
-    private function convertRowsToHtmlTableRows(array $rows, HttpState $state) : string
+    private function convertRowsToHtmlTableRows() : string
     {
         $columns = $this->config->getColumns();
         $output = '';
 
-        $recordsNumber = count($rows);
-        $rowNumberMin = $state->getCurrentPage() * $state->getRowsPerPage();
-        $rowNumberMax = min($recordsNumber, ($state->getCurrentPage() + 1) * $state->getRowsPerPage());
+        $recordsNumber = count($this->rows);
+        $rowNumberMin = $this->state->getCurrentPage() * $this->state->getRowsPerPage();
+        $rowNumberMax = min($recordsNumber, ($this->state->getCurrentPage() + 1) * $this->state->getRowsPerPage());
 
         if ($rowNumberMin > $recordsNumber) {
             throw new \Exception ('Nieprawidłowy numer strony');
@@ -46,7 +54,7 @@ class HtmlDataGrid implements IHtmlDataGrid
                     '<td style="text-align: '
                     . $column->getAlign()
                     . '">'
-                    . $column->getDataType()->format($rows[$n][$key])
+                    . $column->getDataType()->format($this->rows[$n][$key])
                     . '</td>';
             }
 
@@ -56,25 +64,17 @@ class HtmlDataGrid implements IHtmlDataGrid
         return $output;
     }
 
-    private function generatePagination($rows, $state) : string
+    private function generatePagination() : string
     {
         $requestUri = $_SERVER['REQUEST_URI'];
 
-        if ($requestUri === '/') {
-            $requestUri .= '?' . HttpState::PAGE_NUMBER_PARAMETER . '=0';
-        }
-
-        if (strpos($requestUri, HttpState::PAGE_NUMBER_PARAMETER . '=') === false) {
-            $requestUri .= '&' . HttpState::PAGE_NUMBER_PARAMETER . '=0';
-        }
-
         $output = '';
-        $numberOfPages = ceil(count($rows) / $state->getRowsPerPage());
+        $numberOfPages = ceil(count($this->rows) / $this->state->getRowsPerPage());
 
         for ($n = 0; $n < $numberOfPages; $n++) {
             $output .=
                 '<li class="page-item"><a class="page-link" href="'
-                . preg_replace('/([?&])' . HttpState::PAGE_NUMBER_PARAMETER . '=[0-9]{1,10}/', '$1' . HttpState::PAGE_NUMBER_PARAMETER . '=' . $n, $requestUri)
+                . $this->state->createHrefWithParameterVariant(HttpState::PAGE_NUMBER_PARAMETER, $n)
                 . '">' . (string)($n + 1) . '</a></li>';
         }
 
@@ -87,18 +87,24 @@ class HtmlDataGrid implements IHtmlDataGrid
         return $this;
     }
 
-    /*
-    sortowanie:
-        $a - tablica z danymi z json
-    $ac = array_column ($a, 'imie');
-    array_multisort ($ac, SORT_ASC, $a);
-    print_r ($a);
+    private function sort() : void
+    {
+        $orderBy = $this->state->getOrderBy();
 
-    */
+        if ($orderBy === '') {
+            return;
+        }
+
+        $arrayColumn = array_column($this->rows, $orderBy);
+        array_multisort(
+            $arrayColumn,
+            ($this->state->isOrderDesc() ? SORT_DESC : SORT_ASC),
+            $this->rows
+        ); //php-owy array_multisort to zły pomysł, ale na razie niech będzie
+    }
 
 
-
-    public function render(array $rows, HttpState $state): void
+    public function render(): void
     {
         $templateFilePath = self::TEMPLATES_DIRECTORY . $this->templateFile;
         if (!file_exists($templateFilePath)) {
@@ -106,12 +112,14 @@ class HtmlDataGrid implements IHtmlDataGrid
         }
 
         $viewTempate = file_get_contents($templateFilePath);
+        $this->sort();
+
         echo str_replace(
             ['{{table_headers}}', '{{table_rows}}', '{{pagination}}'],
             [
                 $this->generateHeaders(),
-                $this->convertRowsToHtmlTableRows($rows, $state),
-                $this->generatePagination($rows, $state)
+                $this->convertRowsToHtmlTableRows(),
+                $this->generatePagination()
             ],
             $viewTempate
         );
