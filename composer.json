@@ -1,0 +1,20 @@
+{
+    "name": "eengine/test",
+    "description": "Zadanie rekrutacyjne do EENGINE Sławomir Dolata",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Eengine\\Test\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Sławomir Dolata",
+            "email": "slawek@epoczta.pl"
+        }
+    ],
+    "minimum-stability": "beta",
+    "require": {
+        "twbs/bootstrap": "5.0.2"
+    }
+}
